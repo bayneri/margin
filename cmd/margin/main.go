@@ -31,6 +31,10 @@ func main() {
 	}
 
 	switch os.Args[1] {
+	case "analyze":
+		if err := runAnalyze(os.Args[2:]); err != nil {
+			fail(err)
+		}
 	case "apply":
 		if err := runApply(os.Args[2:]); err != nil {
 			fail(err)
@@ -64,6 +68,7 @@ func usage() {
 	fmt.Fprintln(os.Stderr, "")
 	fmt.Fprintln(os.Stderr, "Usage:")
 	fmt.Fprintln(os.Stderr, "  margin apply   -f slo.yaml --project my-gcp-project")
+	fmt.Fprintln(os.Stderr, "  margin analyze --project my-gcp-project --service checkout-api --last 90m")
 	fmt.Fprintln(os.Stderr, "  margin plan    -f slo.yaml --project my-gcp-project")
 	fmt.Fprintln(os.Stderr, "  margin validate -f slo.yaml --project my-gcp-project")
 	fmt.Fprintln(os.Stderr, "  margin explain burn-rate")
@@ -206,5 +211,14 @@ func buildPlan(opts *commandOptions) (planner.Plan, spec.Spec, error) {
 
 func fail(err error) {
 	fmt.Fprintln(os.Stderr, "error:", err)
+	if err == nil {
+		os.Exit(1)
+	}
+	type exitCoder interface {
+		ExitCode() int
+	}
+	if coded, ok := err.(exitCoder); ok {
+		os.Exit(coded.ExitCode())
+	}
 	os.Exit(1)
 }
