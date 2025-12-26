@@ -106,6 +106,7 @@ func runApply(args []string) error {
 		return err
 	}
 	fmt.Fprintf(os.Stdout, "Applied %d SLOs, %d alerts, and 1 dashboard in project %s.\n", len(plan.SLOs), len(plan.Alerts), plan.Project)
+	fmt.Fprintf(os.Stdout, "Cloud Console: https://console.cloud.google.com/monitoring/services?project=%s\n", plan.Project)
 	if opts.verbose {
 		fmt.Fprintf(os.Stdout, "Loaded spec for %s with %d SLOs.\n", specDoc.Metadata.Name, len(specDoc.SLOs))
 	}
