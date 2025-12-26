@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"flag"
 	"fmt"
@@ -8,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/bayneri/margin/internal/alerting"
+	"github.com/bayneri/margin/internal/monitoring"
 	"github.com/bayneri/margin/internal/planner"
 	"github.com/bayneri/margin/internal/spec"
 )
@@ -94,7 +96,16 @@ func runApply(args []string) error {
 		planner.Render(os.Stdout, plan)
 		return nil
 	}
-	fmt.Fprintln(os.Stdout, "Apply is a no-op in this scaffold. Use --dry-run for the plan output.")
+	client, err := monitoring.NewGCPClient(context.Background())
+	if err != nil {
+		return err
+	}
+	defer client.Close()
+
+	if err := monitoring.ApplyPlan(context.Background(), client, plan); err != nil {
+		return err
+	}
+	fmt.Fprintf(os.Stdout, "Applied %d SLOs, %d alerts, and 1 dashboard in project %s.\n", len(plan.SLOs), len(plan.Alerts), plan.Project)
 	if opts.verbose {
 		fmt.Fprintf(os.Stdout, "Loaded spec for %s with %d SLOs.\n", specDoc.Metadata.Name, len(specDoc.SLOs))
 	}
@@ -147,7 +158,19 @@ func runDelete(args []string) error {
 	if err != nil {
 		return err
 	}
-	fmt.Fprintf(os.Stdout, "Delete would remove %d SLOs, %d alerts, and 1 dashboard in project %s.\n", len(plan.SLOs), len(plan.Alerts), plan.Project)
+	if opts.dryRun {
+		fmt.Fprintf(os.Stdout, "Delete would remove %d SLOs, %d alerts, and 1 dashboard in project %s.\n", len(plan.SLOs), len(plan.Alerts), plan.Project)
+		return nil
+	}
+	client, err := monitoring.NewGCPClient(context.Background())
+	if err != nil {
+		return err
+	}
+	defer client.Close()
+	if err := monitoring.DeletePlan(context.Background(), client, plan); err != nil {
+		return err
+	}
+	fmt.Fprintf(os.Stdout, "Deleted managed resources for %s in project %s.\n", plan.ServiceName, plan.Project)
 	return nil
 }
 
