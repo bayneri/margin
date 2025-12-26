@@ -9,22 +9,25 @@ metadata:
     team: payments
     env: prod
 
-slos:
-  - name: availability
-    objective: 99.9
-    window: 30d
-    sli:
-      type: request-based
-      good:
-        metric: run.googleapis.com/request_count
-        filter: 'response_code < 500'
-      total:
-        metric: run.googleapis.com/request_count
+alerting:
+  burnRateResourceType: global
 
-  - name: latency
-    objective: 99
-    window: 30d
-    sli:
-      type: latency
-      metric: run.googleapis.com/request_latencies
-      threshold: 500ms
+slos:
+- name: availability
+  objective: 99.9
+  window: 30d
+  sli:
+    type: request-based
+    good:
+      metric: run.googleapis.com/request_count
+      filter: 'metric.label.response_code = "200" OR metric.label.response_code = "204" OR metric.label.response_code = "304"'
+    total:
+      metric: run.googleapis.com/request_count
+
+- name: latency
+  objective: 99
+  window: 30d
+  sli:
+    type: latency
+    metric: run.googleapis.com/request_latencies
+    threshold: 500ms

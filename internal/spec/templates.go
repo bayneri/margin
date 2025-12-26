@@ -6,9 +6,10 @@ import (
 )
 
 type ServiceTemplate struct {
-	Name     string
-	Metrics  map[string]MetricTemplate
-	Pitfalls []string
+	Name         string
+	ResourceType string
+	Metrics      map[string]MetricTemplate
+	Pitfalls     []string
 }
 
 type MetricTemplate struct {
@@ -18,7 +19,8 @@ type MetricTemplate struct {
 
 var serviceTemplates = map[string]ServiceTemplate{
 	"cloud-run": {
-		Name: "cloud-run",
+		Name:         "cloud-run",
+		ResourceType: "cloud_run_revision",
 		Metrics: map[string]MetricTemplate{
 			"run.googleapis.com/request_count": {
 				Name:        "run.googleapis.com/request_count",
@@ -35,7 +37,8 @@ var serviceTemplates = map[string]ServiceTemplate{
 		},
 	},
 	"https-load-balancer": {
-		Name: "https-load-balancer",
+		Name:         "https-load-balancer",
+		ResourceType: "https_lb_rule",
 		Metrics: map[string]MetricTemplate{
 			"loadbalancing.googleapis.com/https/request_count": {
 				Name:        "loadbalancing.googleapis.com/https/request_count",
