@@ -32,3 +32,23 @@ is sustained before paging humans.
 - Page only when the error budget is burning fast enough to require immediate action.
 - Ticket for slower burns to preserve the budget and force prioritization.
 - Avoid threshold-based alerts for symptoms already captured by SLOs.
+
+## Burn-rate alert implementation
+
+Cloud Monitoring requires a resource type in burn-rate alert filters, and the burn-rate
+series can lag SLO creation. `margin` uses the `select_slo_burn_rate` filter form to
+reference the SLO directly instead of relying on precomputed time series.
+
+Example filter (short window):
+
+```
+select_slo_burn_rate("projects/PROJECT/services/SERVICE_ID/serviceLevelObjectives/SLO_ID", "60m")
+```
+
+If your environment requires a specific resource type for burn-rate alerts, set it in
+the spec:
+
+```yaml
+alerting:
+  burnRateResourceType: global
+```

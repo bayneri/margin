@@ -75,6 +75,17 @@ go build ./cmd/margin
 ./margin plan -f examples/slo.yaml --project my-gcp-project
 ```
 
+## Spec notes
+
+`margin` supports an optional `alerting` block to tune burn-rate alert generation:
+
+```yaml
+alerting:
+  burnRateResourceType: global
+```
+
+`burnRateResourceType` is required by Cloud Monitoring when building burn-rate alert filters. When omitted, `margin` defaults to `global`. If your project uses a different resource type for SLO burn rate, set it explicitly.
+
 ## Repository layout
 
 ```text
