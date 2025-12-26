@@ -75,6 +75,26 @@ go build ./cmd/margin
 ./margin plan -f examples/slo.yaml --project my-gcp-project
 ```
 
+## Analyze an incident
+
+`margin analyze` turns a time window into an SLO impact report.
+
+```bash
+./margin analyze \
+  --project my-gcp-project \
+  --service checkout-api \
+  --last 90m \
+  --out ./out \
+  --explain
+```
+
+Outputs:
+
+- `summary.md`
+- `summary.json`
+- `sources.json`
+- `errors.md` (only if partial)
+
 ## Spec notes
 
 `margin` supports an optional `alerting` block to tune burn-rate alert generation:

@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "1.0",
+  "project": "my-gcp-project",
+  "service": "checkout-api",
+  "window": {
+    "start": "2025-12-01T10:12:00Z",
+    "end": "2025-12-01T11:04:00Z",
+    "durationSeconds": 3120
+  },
+  "slos": [
+    {
+      "sloResourceName": "projects/my-gcp-project/services/checkout-api/serviceLevelObjectives/availability",
+      "sloId": "availability",
+      "displayName": "availability",
+      "goal": 0.999,
+      "rollingPeriodDays": 30,
+      "calendarPeriod": null,
+      "compliance": 0.995,
+      "badFraction": 0.005,
+      "allowedBadFraction": 0.001,
+      "consumedPercentOfBudget": 500,
+      "status": "ok",
+      "explain": {
+        "formula": "allowedBad = 1 - goal; bad = 1 - compliance; consumedPercent = (bad / allowedBad) * 100",
+        "notes": []
+      }
+    },
+    {
+      "sloResourceName": "projects/my-gcp-project/services/checkout-api/serviceLevelObjectives/latency",
+      "sloId": "latency",
+      "displayName": "latency",
+      "goal": 0.99,
+      "rollingPeriodDays": 30,
+      "calendarPeriod": null,
+      "compliance": 0.987,
+      "badFraction": 0.013,
+      "allowedBadFraction": 0.01,
+      "consumedPercentOfBudget": 130,
+      "status": "ok",
+      "explain": {
+        "formula": "allowedBad = 1 - goal; bad = 1 - compliance; consumedPercent = (bad / allowedBad) * 100",
+        "notes": []
+      }
+    }
+  ],
+  "errors": []
+}

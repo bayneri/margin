@@ -1,0 +1,11 @@
+{
+  "project": "my-gcp-project",
+  "service": "checkout-api",
+  "serviceName": "projects/my-gcp-project/services/checkout-api",
+  "start": "2025-12-01T10:12:00Z",
+  "end": "2025-12-01T11:04:00Z",
+  "slos": [
+    "projects/my-gcp-project/services/checkout-api/serviceLevelObjectives/availability",
+    "projects/my-gcp-project/services/checkout-api/serviceLevelObjectives/latency"
+  ]
+}

@@ -15,6 +15,8 @@ The code is organized by responsibility:
 - `internal/planner` translates specs into concrete resources
 - `internal/alerting` owns burn-rate logic and explainers
 - `internal/monitoring` wraps Monitoring API calls
+- `internal/analyze` reads Monitoring data and produces incident reports
+- `internal/report` renders Markdown/JSON artifacts
 - `internal/dashboard` defines dashboard layout primitives
 
 ## Why a CLI
