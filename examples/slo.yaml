@@ -1,4 +1,4 @@
-apiVersion: margin.dev/v1
+apiVersion: margin/v1
 kind: ServiceSLO
 metadata:
   name: checkout-api

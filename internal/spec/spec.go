@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	APIVersionV1   = "margin.dev/v1"
+	APIVersionV1   = "margin/v1"
 	KindServiceSLO = "ServiceSLO"
 )
 
