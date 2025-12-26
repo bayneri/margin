@@ -1,0 +1,30 @@
+apiVersion: margin.dev/v1
+kind: ServiceSLO
+metadata:
+  name: checkout-api
+  service: cloud-run
+  project: my-gcp-project
+  runbook: https://runbooks.example.com/checkout-api
+  labels:
+    team: payments
+    env: prod
+
+slos:
+  - name: availability
+    objective: 99.9
+    window: 30d
+    sli:
+      type: request-based
+      good:
+        metric: run.googleapis.com/request_count
+        filter: 'response_code < 500'
+      total:
+        metric: run.googleapis.com/request_count
+
+  - name: latency
+    objective: 99
+    window: 30d
+    sli:
+      type: latency
+      metric: run.googleapis.com/request_latencies
+      threshold: 500ms
