@@ -1,0 +1,20 @@
+# Binaries
+margin
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Build/test outputs
+*.test
+*.out
+
+# Go workspace
+/go.work
+/go.work.sum
+
+# Editors
+.idea/
+.vscode/
+.DS_Store
