@@ -1,5 +1,5 @@
 # Binaries
-margin
+/margin
 *.exe
 *.exe~
 *.dll
@@ -9,6 +9,7 @@ margin
 # Build/test outputs
 *.test
 *.out
+out/
 
 # Go workspace
 /go.work
