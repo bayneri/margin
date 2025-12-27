@@ -75,6 +75,16 @@ go build ./cmd/margin
 ./margin plan -f examples/slo.yaml --project my-gcp-project
 ```
 
+## Screenshots
+
+SLOs in Cloud Monitoring:
+
+![SLO list](docs/screenshots/slo-list.png)
+
+Dashboard overview:
+
+![Dashboard overview](docs/screenshots/dashboard-overview.png)
+
 ## Analyze an incident
 
 `margin analyze` turns a time window into an SLO impact report.
