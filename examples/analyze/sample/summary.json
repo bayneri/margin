@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "1.0",
+  "schemaVersion": "1.1",
   "project": "my-gcp-project",
   "service": "checkout-api",
   "window": {
@@ -7,6 +7,7 @@
     "end": "2025-12-01T11:04:00Z",
     "durationSeconds": 3120
   },
+  "status": "ok",
   "slos": [
     {
       "sloResourceName": "projects/my-gcp-project/services/checkout-api/serviceLevelObjectives/availability",

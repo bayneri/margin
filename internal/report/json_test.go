@@ -18,6 +18,7 @@ func TestWriteSummaryJSON(t *testing.T) {
 			End:             time.Date(2025, 1, 1, 11, 0, 0, 0, time.UTC),
 			DurationSeconds: 3600,
 		},
+		Status: analyze.StatusOK,
 		SLOs: []analyze.SLOResult{{
 			DisplayName:             "availability",
 			Goal:                    0.999,

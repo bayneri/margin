@@ -122,7 +122,7 @@ func runAnalyze(args []string) error {
 		if opts.failOnPartial {
 			return exitError{code: 2, err: errors.New("partial analysis")}
 		}
-		fmt.Fprintln(os.Stdout, "Partial analysis: some SLOs could not be evaluated.")
+		fmt.Fprintf(os.Stderr, "Partial analysis: %d SLO(s) could not be evaluated. See %s\n", len(result.Errors), filepath.Join(outDir, "errors.md"))
 		return nil
 	}
 	return nil

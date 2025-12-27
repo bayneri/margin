@@ -4,6 +4,7 @@
 - Project: my-gcp-project
 - Window: 2025-12-01T10:12:00Z to 2025-12-01T11:04:00Z
 - Duration: 52m0s
+- Status: ok
 
 | SLO | Goal | Compliance | Bad fraction | Allowed bad | Budget consumed | Status |
 | --- | --- | --- | --- | --- | --- | --- |

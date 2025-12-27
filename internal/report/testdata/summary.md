@@ -4,6 +4,7 @@
 - Project: demo
 - Window: 2025-01-01T10:00:00Z to 2025-01-01T11:00:00Z
 - Duration: 1h0m0s
+- Status: ok
 
 | SLO | Goal | Compliance | Bad fraction | Allowed bad | Budget consumed | Status |
 | --- | --- | --- | --- | --- | --- | --- |

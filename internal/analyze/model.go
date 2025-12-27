@@ -2,13 +2,14 @@ package analyze
 
 import "time"
 
-const SchemaVersion = "1.0"
+const SchemaVersion = "1.1"
 
 type Result struct {
 	SchemaVersion string      `json:"schemaVersion"`
 	Project       string      `json:"project"`
 	Service       string      `json:"service"`
 	Window        Window      `json:"window"`
+	Status        string      `json:"status"`
 	SLOs          []SLOResult `json:"slos"`
 	Errors        []string    `json:"errors"`
 }

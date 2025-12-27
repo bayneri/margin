@@ -26,7 +26,24 @@ func WriteMarkdownSummary(path string, result analyze.Result, opts Options) erro
 	fmt.Fprintf(&b, "- Service: %s\n", result.Service)
 	fmt.Fprintf(&b, "- Project: %s\n", result.Project)
 	fmt.Fprintf(&b, "- Window: %s to %s\n", windowStart, windowEnd)
-	fmt.Fprintf(&b, "- Duration: %s\n\n", formatDuration(result.Window.DurationSeconds))
+	fmt.Fprintf(&b, "- Duration: %s\n", formatDuration(result.Window.DurationSeconds))
+	status := result.Status
+	if status == "" {
+		status = "ok"
+		for _, slo := range result.SLOs {
+			if slo.Status == analyze.StatusBreach {
+				status = "breach"
+				break
+			}
+		}
+		if status == "ok" && len(result.Errors) > 0 {
+			status = analyze.StatusPartial
+		}
+	}
+	if status == analyze.StatusPartial && len(result.Errors) > 0 {
+		status = fmt.Sprintf("partial (%d issue(s))", len(result.Errors))
+	}
+	fmt.Fprintf(&b, "- Status: %s\n\n", status)
 
 	fmt.Fprintf(&b, "| SLO | Goal | Compliance | Bad fraction | Allowed bad | Budget consumed | Status |\n")
 	fmt.Fprintf(&b, "| --- | --- | --- | --- | --- | --- | --- |\n")

@@ -19,17 +19,17 @@ const (
 )
 
 type Options struct {
-	Project       string
-	Service       string
-	Start         string
-	End           string
-	Last          time.Duration
-	OutDir        string
-	Format        []string
-	Explain       bool
-	Timezone      *time.Location
-	MaxSLOs       int
-	Only          *regexp.Regexp
+	Project  string
+	Service  string
+	Start    string
+	End      string
+	Last     time.Duration
+	OutDir   string
+	Format   []string
+	Explain  bool
+	Timezone *time.Location
+	MaxSLOs  int
+	Only     *regexp.Regexp
 }
 
 type Reader interface {
@@ -167,6 +167,7 @@ func Run(ctx context.Context, reader Reader, opts Options) (Result, Sources, str
 	}
 
 	result.Errors = errorsList
+	result.Status = overallStatus(result.SLOs, errorsList)
 
 	sources := Sources{
 		Project:     opts.Project,
@@ -180,6 +181,22 @@ func Run(ctx context.Context, reader Reader, opts Options) (Result, Sources, str
 	}
 
 	return result, sources, outDir, nil
+}
+
+func overallStatus(slos []SLOResult, errorsList []string) string {
+	status := StatusOK
+	for _, slo := range slos {
+		if slo.Status == StatusBreach {
+			return StatusBreach
+		}
+		if slo.Status == StatusPartial || slo.Status == StatusError {
+			status = StatusPartial
+		}
+	}
+	if status == StatusOK && len(errorsList) > 0 {
+		status = StatusPartial
+	}
+	return status
 }
 
 func supportedSLO(slo SLO) (bool, string) {
