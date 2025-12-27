@@ -40,7 +40,10 @@ type ApplyAlertRequest struct {
 
 type ApplyDashboardRequest struct {
 	Project   string
+	ServiceID string
 	Dashboard planner.DashboardPlan
+	SLOs      []planner.SLOPlan
+	Template  spec.ServiceTemplate
 	Labels    map[string]string
 }
 

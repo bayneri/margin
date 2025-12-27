@@ -56,7 +56,10 @@ func ApplyPlan(ctx context.Context, client Client, plan planner.Plan) error {
 
 	if err := client.ApplyDashboard(ctx, ApplyDashboardRequest{
 		Project:   plan.Project,
+		ServiceID: plan.ServiceID,
 		Dashboard: plan.Dashboard,
+		SLOs:      plan.SLOs,
+		Template:  template,
 		Labels:    plan.Dashboard.Labels,
 	}); err != nil {
 		return fmt.Errorf("apply dashboard: %w", err)
