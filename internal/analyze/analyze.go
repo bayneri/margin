@@ -15,6 +15,7 @@ const (
 	StatusOK      = "ok"
 	StatusPartial = "partial"
 	StatusError   = "error"
+	StatusBreach  = "breach"
 )
 
 type Options struct {
@@ -29,7 +30,6 @@ type Options struct {
 	Timezone      *time.Location
 	MaxSLOs       int
 	Only          *regexp.Regexp
-	FailOnPartial bool
 }
 
 type Reader interface {
@@ -148,6 +148,12 @@ func Run(ctx context.Context, reader Reader, opts Options) (Result, Sources, str
 			item.Error = note
 			notes = append(notes, note)
 			errorsList = append(errorsList, fmt.Sprintf("%s: %s", slo.DisplayName, note))
+		}
+		if allowedBad > 0 && consumed > 100 {
+			item.Status = StatusBreach
+			note := "error budget exceeded in window"
+			item.Error = note
+			notes = append(notes, note)
 		}
 
 		if opts.Explain {

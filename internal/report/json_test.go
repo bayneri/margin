@@ -2,17 +2,17 @@ package report
 
 import (
 	"os"
-	"strings"
 	"testing"
 	"time"
 
 	"github.com/bayneri/margin/internal/analyze"
 )
 
-func TestWriteMarkdownSummary(t *testing.T) {
+func TestWriteSummaryJSON(t *testing.T) {
 	result := analyze.Result{
-		Project: "demo",
-		Service: "checkout",
+		SchemaVersion: analyze.SchemaVersion,
+		Project:       "demo",
+		Service:       "checkout",
 		Window: analyze.Window{
 			Start:           time.Date(2025, 1, 1, 10, 0, 0, 0, time.UTC),
 			End:             time.Date(2025, 1, 1, 11, 0, 0, 0, time.UTC),
@@ -29,21 +29,21 @@ func TestWriteMarkdownSummary(t *testing.T) {
 		}},
 	}
 
-	path := "./test-summary.md"
+	path := "./test-summary.json"
 	defer os.Remove(path)
 
-	if err := WriteMarkdownSummary(path, result, Options{Explain: true, Timezone: time.UTC}); err != nil {
+	if err := WriteSummaryJSON(path, result); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	data, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatalf("read file: %v", err)
 	}
-	golden, err := os.ReadFile("./testdata/summary.md")
+	golden, err := os.ReadFile("./testdata/summary.json")
 	if err != nil {
 		t.Fatalf("read golden: %v", err)
 	}
 	if string(data) != string(golden) {
-		t.Fatalf("markdown mismatch")
+		t.Fatalf("json mismatch")
 	}
 }

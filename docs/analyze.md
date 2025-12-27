@@ -35,3 +35,12 @@ This is a window-local ratio. It is not the same as remaining budget over the fu
 
 - Compliance is fetched via Cloud Monitoring time series; missing data yields partial output.
 - Calendar-period SLOs are supported, but still reported with window-local math.
+
+## IAM requirements
+
+`margin analyze` requires read-only Monitoring permissions, typically covered by:
+
+- `roles/monitoring.viewer`
+
+Required permissions include `monitoring.services.list`, `monitoring.services.get`,
+and `monitoring.timeSeries.list`.

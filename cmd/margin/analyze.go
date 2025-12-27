@@ -87,7 +87,6 @@ func runAnalyze(args []string) error {
 		Timezone:      loc,
 		MaxSLOs:       opts.maxSLOs,
 		Only:          only,
-		FailOnPartial: opts.failOnPartial,
 	})
 	if err != nil {
 		return err
@@ -123,7 +122,8 @@ func runAnalyze(args []string) error {
 		if opts.failOnPartial {
 			return exitError{code: 2, err: errors.New("partial analysis")}
 		}
-		return exitError{code: 2, err: errors.New("partial analysis")}
+		fmt.Fprintln(os.Stdout, "Partial analysis: some SLOs could not be evaluated.")
+		return nil
 	}
 	return nil
 }

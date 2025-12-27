@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "1.0",
+  "project": "demo",
+  "service": "checkout",
+  "window": {
+    "start": "2025-01-01T10:00:00Z",
+    "end": "2025-01-01T11:00:00Z",
+    "durationSeconds": 3600
+  },
+  "slos": [
+    {
+      "sloResourceName": "",
+      "sloId": "",
+      "displayName": "availability",
+      "goal": 0.999,
+      "rollingPeriodDays": 0,
+      "calendarPeriod": null,
+      "compliance": 0.995,
+      "badFraction": 0.005,
+      "allowedBadFraction": 0.001,
+      "consumedPercentOfBudget": 500,
+      "status": "ok"
+    }
+  ],
+  "errors": null
+}
