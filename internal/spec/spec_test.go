@@ -52,6 +52,30 @@ func TestQualifiedFilter(t *testing.T) {
 	}
 }
 
+func TestValidateLatencyThreshold(t *testing.T) {
+	template := ServiceTemplate{
+		Name: "cloud-run",
+		Metrics: map[string]MetricTemplate{
+			"run.googleapis.com/request_latencies": {Name: "run.googleapis.com/request_latencies"},
+		},
+	}
+	sli := SLI{
+		Type:      "latency",
+		Metric:    "run.googleapis.com/request_latencies",
+		Threshold: "bad",
+	}
+	errs := validateSLI(sli, template)
+	if len(errs) == 0 {
+		t.Fatalf("expected error for bad threshold")
+	}
+
+	sli.Threshold = "500ms"
+	errs = validateSLI(sli, template)
+	if len(errs) != 0 {
+		t.Fatalf("expected ok threshold, got %v", errs)
+	}
+}
+
 func TestValidateSLOAlerting(t *testing.T) {
 	cases := []struct {
 		name     string

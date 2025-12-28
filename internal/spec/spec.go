@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"time"
 )
 
 const (
@@ -210,6 +211,10 @@ func validateSLI(sli SLI, template ServiceTemplate) []string {
 		}
 		if strings.TrimSpace(sli.Threshold) == "" {
 			errs = append(errs, "threshold is required")
+		} else {
+			if _, err := time.ParseDuration(strings.TrimSpace(sli.Threshold)); err != nil {
+				errs = append(errs, "threshold must be a valid duration like 500ms or 1s")
+			}
 		}
 		if strings.TrimSpace(sli.Filter) != "" && !qualifiedFilter(sli.Filter) {
 			errs = append(errs, "filter must reference metric., resource., project., metadata., or group.")
