@@ -55,6 +55,10 @@ func main() {
 		if err := runDelete(os.Args[2:]); err != nil {
 			fail(err)
 		}
+	case "services":
+		if err := runServices(os.Args[2:]); err != nil {
+			fail(err)
+		}
 	case "version":
 		fmt.Println(version)
 	default:
@@ -71,6 +75,7 @@ func usage() {
 	fmt.Fprintln(os.Stderr, "  margin analyze --project my-gcp-project --service checkout-api --last 90m")
 	fmt.Fprintln(os.Stderr, "  margin plan    -f slo.yaml")
 	fmt.Fprintln(os.Stderr, "  margin validate -f slo.yaml")
+	fmt.Fprintln(os.Stderr, "  margin services list --project my-gcp-project")
 	fmt.Fprintln(os.Stderr, "  margin explain burn-rate")
 	fmt.Fprintln(os.Stderr, "  margin delete  -f slo.yaml")
 }

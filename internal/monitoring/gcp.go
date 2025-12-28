@@ -70,6 +70,23 @@ func (c *GCPClient) Close() error {
 	return nil
 }
 
+func (c *GCPClient) ListServices(ctx context.Context, project string) ([]*monitoringpb.Service, error) {
+	parent := fmt.Sprintf("projects/%s", project)
+	iter := c.serviceClient.ListServices(ctx, &monitoringpb.ListServicesRequest{Parent: parent})
+	var services []*monitoringpb.Service
+	for {
+		service, err := iter.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return nil, fmt.Errorf("list services: %w", err)
+		}
+		services = append(services, service)
+	}
+	return services, nil
+}
+
 func (c *GCPClient) EnsureService(ctx context.Context, req EnsureServiceRequest) error {
 	serviceName := fmt.Sprintf("projects/%s/services/%s", req.Project, req.ServiceID)
 	_, err := c.serviceClient.GetService(ctx, &monitoringpb.GetServiceRequest{Name: serviceName})
