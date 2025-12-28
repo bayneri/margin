@@ -145,6 +145,14 @@ Outputs:
 
 If `--service-type` is omitted, `margin` will try to infer it from the SLO metrics.
 
+## Aggregate reports
+
+`margin report` merges multiple analyze summaries into a single report.
+
+```bash
+./margin report --inputs out/a/summary.json,out/b/summary.json --out out/report
+```
+
 ## Spec notes
 
 `margin` supports an optional `alerting` block to tune burn-rate alert generation:

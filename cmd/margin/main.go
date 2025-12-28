@@ -63,6 +63,10 @@ func main() {
 		if err := runImport(os.Args[2:]); err != nil {
 			fail(err)
 		}
+	case "report":
+		if err := runReport(os.Args[2:]); err != nil {
+			fail(err)
+		}
 	case "services":
 		if err := runServices(os.Args[2:]); err != nil {
 			fail(err)
@@ -86,6 +90,7 @@ func usage() {
 	fmt.Fprintln(os.Stderr, "  margin export terraform -f slo.yaml --out out/terraform")
 	fmt.Fprintln(os.Stderr, "  margin export monitoring-json -f slo.yaml --out out/monitoring-json")
 	fmt.Fprintln(os.Stderr, "  margin import --project my-gcp-project --service checkout-api --out out/import/checkout-api.yaml")
+	fmt.Fprintln(os.Stderr, "  margin report --inputs out/a/summary.json,out/b/summary.json --out out/report")
 	fmt.Fprintln(os.Stderr, "  margin services list --project my-gcp-project")
 	fmt.Fprintln(os.Stderr, "  margin explain burn-rate")
 	fmt.Fprintln(os.Stderr, "  margin delete  -f slo.yaml")
