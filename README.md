@@ -75,6 +75,22 @@ go build ./cmd/margin
 ./margin plan -f examples/slo.yaml --project my-gcp-project
 ```
 
+## Supported services (v0.3)
+
+- Cloud Run (`cloud-run`)
+- HTTPS Load Balancer (`https-load-balancer`)
+- GKE Ingress (`gke-ingress`)
+- Cloud SQL (`cloud-sql`)
+- GKE Service (`gke-service`)
+- GKE Gateway (`gke-gateway`)
+- GCE Load Balancer (`gce-lb`)
+- Cloud Functions (`cloud-functions`)
+- Pub/Sub Subscription (`pubsub-subscription`)
+- Cloud Storage (`cloud-storage`)
+- Cloud Tasks (`cloud-tasks`)
+- BigQuery (`bigquery`)
+- Spanner (`spanner`)
+
 ## Screenshots
 
 SLOs in Cloud Monitoring:
