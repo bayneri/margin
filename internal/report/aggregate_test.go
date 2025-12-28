@@ -57,6 +57,9 @@ func TestAggregateResults(t *testing.T) {
 	if len(agg.Services) != 1 {
 		t.Fatalf("expected 1 service, got %d", len(agg.Services))
 	}
+	if agg.Status != analyze.StatusBreach {
+		t.Fatalf("expected overall breach, got %s", agg.Status)
+	}
 	if agg.Services[0].Status != analyze.StatusBreach {
 		t.Fatalf("expected breach, got %s", agg.Services[0].Status)
 	}

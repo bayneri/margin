@@ -20,6 +20,7 @@ type AggregateOptions struct {
 type AggregateResult struct {
 	SchemaVersion string             `json:"schemaVersion"`
 	Inputs        []string           `json:"inputs"`
+	Status        string             `json:"status"`
 	Services      []ServiceAggregate `json:"services"`
 	Errors        []string           `json:"errors"`
 }
@@ -58,7 +59,10 @@ func Aggregate(results []analyze.Result, inputs []string) (AggregateResult, erro
 	}
 	byService := map[string]*ServiceAggregate{}
 	var errorsList []string
+	status := analyze.StatusOK
 	for i, result := range results {
+		status = mergeStatus(status, result.Status)
+		status = mergeStatus(status, statusFromSLOs(result.SLOs))
 		key := fmt.Sprintf("%s/%s", result.Project, result.Service)
 		item, ok := byService[key]
 		if !ok {
@@ -103,6 +107,7 @@ func Aggregate(results []analyze.Result, inputs []string) (AggregateResult, erro
 	return AggregateResult{
 		SchemaVersion: analyze.SchemaVersion,
 		Inputs:        inputs,
+		Status:        status,
 		Services:      services,
 		Errors:        errorsList,
 	}, nil
