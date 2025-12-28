@@ -97,6 +97,26 @@ func BuildDashboardJSON(req ApplyDashboardRequest) (string, error) {
 	return string(marshaled) + "\n", nil
 }
 
+func (c *GCPClient) ListServiceLevelObjectives(ctx context.Context, project, serviceID string) ([]*monitoringpb.ServiceLevelObjective, error) {
+	parent := fmt.Sprintf("projects/%s/services/%s", project, serviceID)
+	iter := c.serviceClient.ListServiceLevelObjectives(ctx, &monitoringpb.ListServiceLevelObjectivesRequest{
+		Parent: parent,
+		View:   monitoringpb.ServiceLevelObjective_EXPLICIT,
+	})
+	var slos []*monitoringpb.ServiceLevelObjective
+	for {
+		slo, err := iter.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return nil, fmt.Errorf("list service level objectives: %w", err)
+		}
+		slos = append(slos, slo)
+	}
+	return slos, nil
+}
+
 func BuildService(req EnsureServiceRequest) *monitoringpb.Service {
 	return &monitoringpb.Service{
 		Name:        fmt.Sprintf("projects/%s/services/%s", req.Project, req.ServiceID),

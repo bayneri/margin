@@ -135,6 +135,16 @@ Outputs:
 ./margin export monitoring-json -f examples/slo.yaml --out out/monitoring-json
 ```
 
+## Import existing SLOs
+
+`margin import` pulls Monitoring SLOs and emits a best-effort spec draft.
+
+```bash
+./margin import --project my-gcp-project --service checkout-api --out out/import/checkout-api.yaml
+```
+
+If `--service-type` is omitted, `margin` will try to infer it from the SLO metrics.
+
 ## Spec notes
 
 `margin` supports an optional `alerting` block to tune burn-rate alert generation:
