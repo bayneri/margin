@@ -51,3 +51,29 @@ func TestQualifiedFilter(t *testing.T) {
 		}
 	}
 }
+
+func TestValidateSLOAlerting(t *testing.T) {
+	cases := []struct {
+		name     string
+		alerting SLOAlerting
+		wantOK   bool
+	}{
+		{"empty", SLOAlerting{}, true},
+		{"fast-ok", SLOAlerting{Fast: &AlertOverride{Windows: []string{"5m", "1h"}, BurnRate: 10}}, true},
+		{"slow-bad-windows", SLOAlerting{Slow: &AlertOverride{Windows: []string{"5m"}}}, false},
+		{"fast-bad-window", SLOAlerting{Fast: &AlertOverride{Windows: []string{"5m", "bad"}}}, false},
+		{"fast-negative-burn", SLOAlerting{Fast: &AlertOverride{BurnRate: -1}}, false},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := validateSLOAlerting(tc.alerting)
+			if tc.wantOK && got != "" {
+				t.Fatalf("expected ok, got %q", got)
+			}
+			if !tc.wantOK && got == "" {
+				t.Fatalf("expected error, got ok")
+			}
+		})
+	}
+}

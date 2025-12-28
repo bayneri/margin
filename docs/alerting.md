@@ -27,6 +27,33 @@ Default windows and burn rates:
 The fast window catches rapid regressions, while the slow window confirms the issue
 is sustained before paging humans.
 
+## Per-SLO overrides
+
+You can override burn-rate windows and burn rate per SLO:
+
+```yaml
+slos:
+  - name: availability
+    objective: 99.9
+    window: 30d
+    sli:
+      type: request-based
+      good:
+        metric: run.googleapis.com/request_count
+        filter: 'metric.label.response_code < 500'
+      total:
+        metric: run.googleapis.com/request_count
+    alerting:
+      fast:
+        windows: ["2m", "30m"]
+        burnRate: 20
+      slow:
+        windows: ["1h", "12h"]
+        burnRate: 3
+```
+
+Only the fields you set are overridden; missing values keep defaults.
+
 ## Paging philosophy
 
 - Page only when the error budget is burning fast enough to require immediate action.

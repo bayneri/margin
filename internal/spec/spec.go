@@ -33,11 +33,12 @@ type Alerting struct {
 }
 
 type SLO struct {
-	Name      string  `yaml:"name"`
-	Objective float64 `yaml:"objective"`
-	Window    string  `yaml:"window"`
-	Period    string  `yaml:"period"`
-	SLI       SLI     `yaml:"sli"`
+	Name      string      `yaml:"name"`
+	Objective float64     `yaml:"objective"`
+	Window    string      `yaml:"window"`
+	Period    string      `yaml:"period"`
+	SLI       SLI         `yaml:"sli"`
+	Alerting  SLOAlerting `yaml:"alerting"`
 }
 
 type SLI struct {
@@ -52,6 +53,16 @@ type SLI struct {
 type MetricDef struct {
 	Metric string `yaml:"metric"`
 	Filter string `yaml:"filter"`
+}
+
+type SLOAlerting struct {
+	Fast *AlertOverride `yaml:"fast"`
+	Slow *AlertOverride `yaml:"slow"`
+}
+
+type AlertOverride struct {
+	Windows  []string `yaml:"windows"`
+	BurnRate float64  `yaml:"burnRate"`
 }
 
 var windowRe = regexp.MustCompile(`^(\d+)([smhdw])$`)
@@ -98,6 +109,9 @@ func (s Spec) Validate() error {
 		}
 		if !validWindow(slo.Window) {
 			errs = append(errs, fmt.Sprintf("%s.window must look like 30d, 1h, or 15m", prefix))
+		}
+		if overrideErr := validateSLOAlerting(slo.Alerting); overrideErr != "" {
+			errs = append(errs, fmt.Sprintf("%s.alerting: %s", prefix, overrideErr))
 		}
 		sliErrs := validateSLI(slo.SLI, template)
 		for _, err := range sliErrs {
@@ -209,6 +223,44 @@ func validateSLI(sli SLI, template ServiceTemplate) []string {
 		errs = append(errs, "type must be request-based or latency")
 	}
 	return errs
+}
+
+func validateSLOAlerting(alerting SLOAlerting) string {
+	var errs []string
+	if err := validateAlertOverride("fast", alerting.Fast); err != "" {
+		errs = append(errs, err)
+	}
+	if err := validateAlertOverride("slow", alerting.Slow); err != "" {
+		errs = append(errs, err)
+	}
+	if len(errs) > 0 {
+		return strings.Join(errs, "; ")
+	}
+	return ""
+}
+
+func validateAlertOverride(name string, override *AlertOverride) string {
+	if override == nil {
+		return ""
+	}
+	var errs []string
+	if len(override.Windows) > 0 {
+		if len(override.Windows) != 2 {
+			errs = append(errs, fmt.Sprintf("%s.windows must have exactly 2 entries", name))
+		}
+		for _, window := range override.Windows {
+			if !validWindow(window) {
+				errs = append(errs, fmt.Sprintf("%s.windows value %q must look like 30d, 1h, or 15m", name, window))
+			}
+		}
+	}
+	if override.BurnRate < 0 {
+		errs = append(errs, fmt.Sprintf("%s.burnRate must be >= 0", name))
+	}
+	if len(errs) > 0 {
+		return strings.Join(errs, "; ")
+	}
+	return ""
 }
 
 func qualifiedFilter(filter string) bool {

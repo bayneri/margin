@@ -137,9 +137,18 @@ func slowAlertPlans(specDoc spec.Spec, labels map[string]string, burnRateResourc
 	return buildAlerts(specDoc, labels, burnRateResourceType, "slow-burn", []string{"30m", "6h"}, 6.0, "ticket")
 }
 
-func buildAlerts(specDoc spec.Spec, labels map[string]string, burnRateResourceType string, alertType string, windows []string, burnRate float64, severity string) []AlertPlan {
+func buildAlerts(specDoc spec.Spec, labels map[string]string, burnRateResourceType string, alertType string, defaultWindows []string, defaultBurnRate float64, severity string) []AlertPlan {
 	var alerts []AlertPlan
 	for _, slo := range specDoc.SLOs {
+		overrideWindows, overrideBurnRate := alertOverrides(slo.Alerting, alertType)
+		windows := defaultWindows
+		burnRate := defaultBurnRate
+		if len(overrideWindows) > 0 {
+			windows = overrideWindows
+		}
+		if overrideBurnRate > 0 {
+			burnRate = overrideBurnRate
+		}
 		alertID := fmt.Sprintf("%s-%s-%s", specDoc.Metadata.Name, slo.Name, alertType)
 		displayName := fmt.Sprintf("%s %s %s", specDoc.Metadata.Name, slo.Name, alertType)
 		alerts = append(alerts, AlertPlan{
@@ -157,6 +166,23 @@ func buildAlerts(specDoc spec.Spec, labels map[string]string, burnRateResourceTy
 		})
 	}
 	return alerts
+}
+
+func alertOverrides(alerting spec.SLOAlerting, alertType string) ([]string, float64) {
+	switch alertType {
+	case "fast-burn":
+		if alerting.Fast == nil {
+			return nil, 0
+		}
+		return alerting.Fast.Windows, alerting.Fast.BurnRate
+	case "slow-burn":
+		if alerting.Slow == nil {
+			return nil, 0
+		}
+		return alerting.Slow.Windows, alerting.Slow.BurnRate
+	default:
+		return nil, 0
+	}
 }
 
 func sanitizeID(input string) string {
