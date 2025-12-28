@@ -54,6 +54,11 @@ slos:
 
 Only the fields you set are overridden; missing values keep defaults.
 
+Validation:
+
+- Alert override windows must be two ordered values (short, long) and at least 1m, burnRate >= 1.
+- Filters must include a `resource.type` matching the service template (e.g., `cloud_run_revision`, `https_lb_rule`).
+
 ## Paging philosophy
 
 - Page only when the error budget is burning fast enough to require immediate action.

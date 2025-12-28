@@ -19,6 +19,7 @@ For each SLO:
 - `consumedPercent = (bad / allowedBad) * 100`
 
 This is a window-local ratio. It is not the same as remaining budget over the full rolling period.
+Overall status is `breach` if any SLO exceeded its budget in the window; otherwise `ok` unless partial.
 
 ## Flags
 
@@ -30,11 +31,13 @@ This is a window-local ratio. It is not the same as remaining budget over the fu
 - `--max-slos` limit SLOs analyzed
 - `--only` filter by regex
 - `--fail-on-partial` exit non-zero on partial results
+  - Partial results still write `summary.*`; without this flag the exit code is 0 with warnings.
 
 ## Caveats
 
 - Compliance is fetched via Cloud Monitoring time series; missing data yields partial output.
 - Calendar-period SLOs are supported, but still reported with window-local math.
+- `margin report` aggregates multiple analyze outputs; overall status is the worst across services/SLOs, and partials produce exit code 2.
 
 ## IAM requirements
 

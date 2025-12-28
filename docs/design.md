@@ -8,6 +8,9 @@
 2. Validates objective math and template constraints
 3. Plans the concrete Monitoring resources (SLOs, alerts, dashboards)
 4. Applies them idempotently via Google Cloud Monitoring APIs
+5. Exports equivalent Terraform/JSON payloads
+6. Imports existing Monitoring SLOs into a draft spec (read-only)
+7. Aggregates analyze outputs into a combined report (read-only)
 
 The code is organized by responsibility:
 
@@ -17,6 +20,9 @@ The code is organized by responsibility:
 - `internal/monitoring` wraps Monitoring API calls
 - `internal/analyze` reads Monitoring data and produces incident reports
 - `internal/report` renders Markdown/JSON artifacts
+- `internal/export` emits Terraform/Monitoring JSON (read-only)
+- `internal/importer` ingests existing SLOs into a draft spec (read-only)
+- `internal/report` also aggregates analyze outputs into combined reports (read-only)
 - `internal/dashboard` defines dashboard layout primitives
 
 ## Why a CLI
