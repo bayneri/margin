@@ -45,6 +45,6 @@ func TestWriteSummaryJSON(t *testing.T) {
 		t.Fatalf("read golden: %v", err)
 	}
 	if string(data) != string(golden) {
-		t.Fatalf("json mismatch")
+		t.Fatalf("json mismatch\n--- got ---\n%s\n--- want ---\n%s", string(data), string(golden))
 	}
 }

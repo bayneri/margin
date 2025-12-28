@@ -2,7 +2,6 @@ package report
 
 import (
 	"os"
-	"strings"
 	"testing"
 	"time"
 

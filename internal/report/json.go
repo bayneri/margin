@@ -12,6 +12,7 @@ func WriteJSON(path string, payload interface{}) error {
 	if err != nil {
 		return err
 	}
+	data = append(data, '\n')
 	return os.WriteFile(path, data, 0644)
 }
 
