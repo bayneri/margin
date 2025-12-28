@@ -121,6 +121,14 @@ Outputs:
 - `sources.json`
 - `errors.md` (only if partial)
 
+## Terraform export
+
+`margin export terraform` writes a standalone `main.tf.json` with Monitoring resources.
+
+```bash
+./margin export terraform -f examples/slo.yaml --out out/terraform
+```
+
 ## Spec notes
 
 `margin` supports an optional `alerting` block to tune burn-rate alert generation:

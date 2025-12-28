@@ -1,0 +1,44 @@
+package main
+
+import (
+	"errors"
+	"fmt"
+	"os"
+
+	"github.com/bayneri/margin/internal/export/terraform"
+	"github.com/bayneri/margin/internal/spec"
+)
+
+func runExport(args []string) error {
+	if len(args) == 0 {
+		return errors.New("export requires a format: terraform")
+	}
+	switch args[0] {
+	case "terraform":
+		return runExportTerraform(args[1:])
+	default:
+		return fmt.Errorf("unknown export format %q", args[0])
+	}
+}
+
+func runExportTerraform(args []string) error {
+	fs, opts := baseFlags("export terraform", args)
+	outDir := fs.String("out", "out/terraform", "output directory")
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+	plan, specDoc, err := buildPlan(opts)
+	if err != nil {
+		return err
+	}
+	template, err := spec.TemplateForService(specDoc.Metadata.Service)
+	if err != nil {
+		return err
+	}
+	path, err := terraform.Write(plan, template, *outDir)
+	if err != nil {
+		return err
+	}
+	fmt.Fprintf(os.Stdout, "Wrote Terraform export to %s\n", path)
+	return nil
+}

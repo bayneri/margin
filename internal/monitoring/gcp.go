@@ -18,6 +18,7 @@ import (
 	"google.golang.org/genproto/googleapis/type/calendarperiod"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
@@ -85,6 +86,15 @@ func (c *GCPClient) ListServices(ctx context.Context, project string) ([]*monito
 		services = append(services, service)
 	}
 	return services, nil
+}
+
+func BuildDashboardJSON(req ApplyDashboardRequest) (string, error) {
+	dashboard := buildDashboard(req)
+	marshaled, err := protojson.MarshalOptions{Indent: "  "}.Marshal(dashboard)
+	if err != nil {
+		return "", err
+	}
+	return string(marshaled) + "\n", nil
 }
 
 func (c *GCPClient) EnsureService(ctx context.Context, req EnsureServiceRequest) error {
