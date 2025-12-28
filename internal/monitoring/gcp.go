@@ -97,6 +97,26 @@ func BuildDashboardJSON(req ApplyDashboardRequest) (string, error) {
 	return string(marshaled) + "\n", nil
 }
 
+func BuildService(req EnsureServiceRequest) *monitoringpb.Service {
+	return &monitoringpb.Service{
+		Name:        fmt.Sprintf("projects/%s/services/%s", req.Project, req.ServiceID),
+		DisplayName: req.DisplayName,
+		UserLabels:  req.Labels,
+	}
+}
+
+func BuildSLO(req ApplySLORequest) (*monitoringpb.ServiceLevelObjective, error) {
+	return buildSLO(req)
+}
+
+func BuildAlertPolicy(req ApplyAlertRequest) (*monitoringpb.AlertPolicy, error) {
+	return buildAlertPolicy(req)
+}
+
+func BuildDashboard(req ApplyDashboardRequest) *dashboardpb.Dashboard {
+	return buildDashboard(req)
+}
+
 func (c *GCPClient) EnsureService(ctx context.Context, req EnsureServiceRequest) error {
 	serviceName := fmt.Sprintf("projects/%s/services/%s", req.Project, req.ServiceID)
 	_, err := c.serviceClient.GetService(ctx, &monitoringpb.GetServiceRequest{Name: serviceName})

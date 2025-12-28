@@ -80,6 +80,7 @@ func usage() {
 	fmt.Fprintln(os.Stderr, "  margin plan    -f slo.yaml")
 	fmt.Fprintln(os.Stderr, "  margin validate -f slo.yaml")
 	fmt.Fprintln(os.Stderr, "  margin export terraform -f slo.yaml --out out/terraform")
+	fmt.Fprintln(os.Stderr, "  margin export monitoring-json -f slo.yaml --out out/monitoring-json")
 	fmt.Fprintln(os.Stderr, "  margin services list --project my-gcp-project")
 	fmt.Fprintln(os.Stderr, "  margin explain burn-rate")
 	fmt.Fprintln(os.Stderr, "  margin delete  -f slo.yaml")

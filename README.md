@@ -121,12 +121,18 @@ Outputs:
 - `sources.json`
 - `errors.md` (only if partial)
 
-## Terraform export
+## Exports
 
 `margin export terraform` writes a standalone `main.tf.json` with Monitoring resources.
 
 ```bash
 ./margin export terraform -f examples/slo.yaml --out out/terraform
+```
+
+`margin export monitoring-json` writes raw Monitoring API JSON payloads.
+
+```bash
+./margin export monitoring-json -f examples/slo.yaml --out out/monitoring-json
 ```
 
 ## Spec notes
