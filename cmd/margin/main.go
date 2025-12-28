@@ -67,12 +67,12 @@ func usage() {
 	fmt.Fprintln(os.Stderr, "margin - opinionated SLOs for Google Cloud")
 	fmt.Fprintln(os.Stderr, "")
 	fmt.Fprintln(os.Stderr, "Usage:")
-	fmt.Fprintln(os.Stderr, "  margin apply   -f slo.yaml --project my-gcp-project")
+	fmt.Fprintln(os.Stderr, "  margin apply   -f slo.yaml")
 	fmt.Fprintln(os.Stderr, "  margin analyze --project my-gcp-project --service checkout-api --last 90m")
-	fmt.Fprintln(os.Stderr, "  margin plan    -f slo.yaml --project my-gcp-project")
-	fmt.Fprintln(os.Stderr, "  margin validate -f slo.yaml --project my-gcp-project")
+	fmt.Fprintln(os.Stderr, "  margin plan    -f slo.yaml")
+	fmt.Fprintln(os.Stderr, "  margin validate -f slo.yaml")
 	fmt.Fprintln(os.Stderr, "  margin explain burn-rate")
-	fmt.Fprintln(os.Stderr, "  margin delete  -f slo.yaml --project my-gcp-project")
+	fmt.Fprintln(os.Stderr, "  margin delete  -f slo.yaml")
 }
 
 func baseFlags(cmd string, args []string) (*flag.FlagSet, *commandOptions) {
@@ -81,7 +81,7 @@ func baseFlags(cmd string, args []string) (*flag.FlagSet, *commandOptions) {
 
 	opts := &commandOptions{}
 	fs.StringVar(&opts.file, "f", "", "path to SLO spec")
-	fs.StringVar(&opts.project, "project", "", "GCP project ID")
+	fs.StringVar(&opts.project, "project", "", "GCP project ID (overrides metadata.project)")
 	fs.BoolVar(&opts.dryRun, "dry-run", false, "show planned changes without applying")
 	fs.BoolVar(&opts.verbose, "verbose", false, "verbose output")
 	fs.StringVar(&opts.labels, "labels", "", "extra labels in key=value,key=value format")
@@ -196,7 +196,7 @@ func buildPlan(opts *commandOptions) (planner.Plan, spec.Spec, error) {
 		return planner.Plan{}, spec.Spec{}, err
 	}
 	if strings.TrimSpace(opts.project) == "" && strings.TrimSpace(specDoc.Metadata.Project) == "" {
-		return planner.Plan{}, spec.Spec{}, errors.New("--project is required")
+		return planner.Plan{}, spec.Spec{}, errors.New("project is required via --project or metadata.project")
 	}
 	if opts.project != "" && specDoc.Metadata.Project != "" && opts.project != specDoc.Metadata.Project {
 		return planner.Plan{}, spec.Spec{}, fmt.Errorf("--project %q does not match metadata.project %q", opts.project, specDoc.Metadata.Project)
