@@ -204,6 +204,12 @@ func validateSLI(sli SLI, template ServiceTemplate) []string {
 			if err := template.ValidateMetric(sli.Total.Metric); err != nil {
 				errs = append(errs, err.Error())
 			}
+			if !filterHasResource(sli.Good.Filter, template.ResourceType) {
+				errs = append(errs, fmt.Sprintf("good.filter must include resource.type=%q", template.ResourceType))
+			}
+			if strings.TrimSpace(sli.Total.Filter) != "" && !filterHasResource(sli.Total.Filter, template.ResourceType) {
+				errs = append(errs, fmt.Sprintf("total.filter must include resource.type=%q", template.ResourceType))
+			}
 		}
 	case "latency":
 		if strings.TrimSpace(sli.Metric) == "" {
@@ -222,6 +228,9 @@ func validateSLI(sli SLI, template ServiceTemplate) []string {
 		if template.Name != "" {
 			if err := template.ValidateMetric(sli.Metric); err != nil {
 				errs = append(errs, err.Error())
+			}
+			if !filterHasResource(sli.Filter, template.ResourceType) {
+				errs = append(errs, fmt.Sprintf("filter must include resource.type=%q", template.ResourceType))
 			}
 		}
 	default:
@@ -253,19 +262,35 @@ func validateAlertOverride(name string, override *AlertOverride) string {
 		if len(override.Windows) != 2 {
 			errs = append(errs, fmt.Sprintf("%s.windows must have exactly 2 entries", name))
 		}
+		if len(override.Windows) == 2 {
+			if !validWindow(override.Windows[0]) || !validWindow(override.Windows[1]) {
+				errs = append(errs, fmt.Sprintf("%s.windows must look like 30d, 1h, or 15m", name))
+			}
+			if override.Windows[0] == override.Windows[1] {
+				errs = append(errs, fmt.Sprintf("%s.windows must have distinct short/long windows", name))
+			}
+		}
 		for _, window := range override.Windows {
 			if !validWindow(window) {
 				errs = append(errs, fmt.Sprintf("%s.windows value %q must look like 30d, 1h, or 15m", name, window))
 			}
 		}
 	}
-	if override.BurnRate < 0 {
-		errs = append(errs, fmt.Sprintf("%s.burnRate must be >= 0", name))
+	if override.BurnRate < 1 {
+		errs = append(errs, fmt.Sprintf("%s.burnRate must be >= 1", name))
 	}
 	if len(errs) > 0 {
 		return strings.Join(errs, "; ")
 	}
 	return ""
+}
+
+func filterHasResource(filter, resourceType string) bool {
+	if strings.TrimSpace(resourceType) == "" {
+		return true
+	}
+	return strings.Contains(filter, fmt.Sprintf("resource.type=\"%s\"", resourceType)) ||
+		strings.Contains(filter, fmt.Sprintf("resource.type=%q", resourceType))
 }
 
 func qualifiedFilter(filter string) bool {

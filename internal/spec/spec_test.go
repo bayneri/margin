@@ -87,6 +87,8 @@ func TestValidateSLOAlerting(t *testing.T) {
 		{"slow-bad-windows", SLOAlerting{Slow: &AlertOverride{Windows: []string{"5m"}}}, false},
 		{"fast-bad-window", SLOAlerting{Fast: &AlertOverride{Windows: []string{"5m", "bad"}}}, false},
 		{"fast-negative-burn", SLOAlerting{Fast: &AlertOverride{BurnRate: -1}}, false},
+		{"fast-low-burn", SLOAlerting{Fast: &AlertOverride{Windows: []string{"5m", "1h"}, BurnRate: 0.5}}, false},
+		{"fast-same-window", SLOAlerting{Fast: &AlertOverride{Windows: []string{"5m", "5m"}, BurnRate: 2}}, false},
 	}
 
 	for _, tc := range cases {
