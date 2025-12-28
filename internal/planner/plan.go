@@ -53,6 +53,7 @@ type DashboardPlan struct {
 	ID          string
 	DisplayName string
 	Service     string
+	Runbook     string
 	Labels      map[string]string
 }
 
@@ -111,6 +112,7 @@ func Build(specDoc spec.Spec, opts Options) Plan {
 			ID:          fmt.Sprintf("%s-dashboard", specDoc.Metadata.Name),
 			DisplayName: fmt.Sprintf("%s service dashboard", specDoc.Metadata.Name),
 			Service:     specDoc.Metadata.Name,
+			Runbook:     specDoc.Metadata.Runbook,
 			Labels:      labels,
 		},
 	}
