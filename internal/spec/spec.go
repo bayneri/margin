@@ -85,6 +85,9 @@ func (s Spec) Validate() error {
 	if strings.TrimSpace(s.Metadata.Project) == "" {
 		errs = append(errs, "metadata.project is required")
 	}
+	if strings.TrimSpace(s.Metadata.Runbook) != "" && !validURL(s.Metadata.Runbook) {
+		errs = append(errs, "metadata.runbook must start with http:// or https://")
+	}
 	if len(s.SLOs) == 0 {
 		errs = append(errs, "at least one SLO is required")
 	}
@@ -110,6 +113,8 @@ func (s Spec) Validate() error {
 		}
 		if !validWindow(slo.Window) {
 			errs = append(errs, fmt.Sprintf("%s.window must look like 30d, 1h, or 15m", prefix))
+		} else if windowErr := validateWindowBounds(slo.Window); windowErr != "" {
+			errs = append(errs, fmt.Sprintf("%s.window: %s", prefix, windowErr))
 		}
 		if overrideErr := validateSLOAlerting(slo.Alerting); overrideErr != "" {
 			errs = append(errs, fmt.Sprintf("%s.alerting: %s", prefix, overrideErr))
@@ -263,11 +268,17 @@ func validateAlertOverride(name string, override *AlertOverride) string {
 			errs = append(errs, fmt.Sprintf("%s.windows must have exactly 2 entries", name))
 		}
 		if len(override.Windows) == 2 {
-			if !validWindow(override.Windows[0]) || !validWindow(override.Windows[1]) {
+			d0, err0 := parseWindowDuration(override.Windows[0])
+			d1, err1 := parseWindowDuration(override.Windows[1])
+			if err0 != nil || err1 != nil {
 				errs = append(errs, fmt.Sprintf("%s.windows must look like 30d, 1h, or 15m", name))
-			}
-			if override.Windows[0] == override.Windows[1] {
-				errs = append(errs, fmt.Sprintf("%s.windows must have distinct short/long windows", name))
+			} else {
+				if d0 == d1 {
+					errs = append(errs, fmt.Sprintf("%s.windows must have distinct short/long windows", name))
+				}
+				if d0 >= d1 {
+					errs = append(errs, fmt.Sprintf("%s.windows must be ordered short, long", name))
+				}
 			}
 		}
 		for _, window := range override.Windows {
@@ -291,6 +302,51 @@ func filterHasResource(filter, resourceType string) bool {
 	}
 	return strings.Contains(filter, fmt.Sprintf("resource.type=\"%s\"", resourceType)) ||
 		strings.Contains(filter, fmt.Sprintf("resource.type=%q", resourceType))
+}
+
+func validateWindowBounds(window string) string {
+	d, err := parseWindowDuration(window)
+	if err != nil {
+		return err.Error()
+	}
+	if d < time.Minute {
+		return "window must be at least 1m"
+	}
+	if d > 90*24*time.Hour {
+		return "window must be 90d or less"
+	}
+	return ""
+}
+
+func parseWindowDuration(window string) (time.Duration, error) {
+	if window == "" {
+		return 0, fmt.Errorf("window is empty")
+	}
+	unit := window[len(window)-1]
+	value := window[:len(window)-1]
+	var amount int
+	if _, err := fmt.Sscanf(value, "%d", &amount); err != nil {
+		return 0, fmt.Errorf("invalid window %q", window)
+	}
+	switch unit {
+	case 's':
+		return time.Duration(amount) * time.Second, nil
+	case 'm':
+		return time.Duration(amount) * time.Minute, nil
+	case 'h':
+		return time.Duration(amount) * time.Hour, nil
+	case 'd':
+		return time.Duration(amount) * 24 * time.Hour, nil
+	case 'w':
+		return time.Duration(amount) * 7 * 24 * time.Hour, nil
+	default:
+		return 0, fmt.Errorf("unknown window unit %q", string(unit))
+	}
+}
+
+func validURL(value string) bool {
+	value = strings.TrimSpace(value)
+	return strings.HasPrefix(value, "http://") || strings.HasPrefix(value, "https://")
 }
 
 func qualifiedFilter(filter string) bool {

@@ -89,6 +89,7 @@ func TestValidateSLOAlerting(t *testing.T) {
 		{"fast-negative-burn", SLOAlerting{Fast: &AlertOverride{BurnRate: -1}}, false},
 		{"fast-low-burn", SLOAlerting{Fast: &AlertOverride{Windows: []string{"5m", "1h"}, BurnRate: 0.5}}, false},
 		{"fast-same-window", SLOAlerting{Fast: &AlertOverride{Windows: []string{"5m", "5m"}, BurnRate: 2}}, false},
+		{"fast-out-of-order", SLOAlerting{Fast: &AlertOverride{Windows: []string{"1h", "5m"}, BurnRate: 2}}, false},
 	}
 
 	for _, tc := range cases {
@@ -101,5 +102,17 @@ func TestValidateSLOAlerting(t *testing.T) {
 				t.Fatalf("expected error, got ok")
 			}
 		})
+	}
+}
+
+func TestValidateWindowBounds(t *testing.T) {
+	if msg := validateWindowBounds("30s"); msg == "" {
+		t.Fatalf("expected too-short window error")
+	}
+	if msg := validateWindowBounds("120d"); msg == "" {
+		t.Fatalf("expected too-long window error")
+	}
+	if msg := validateWindowBounds("30d"); msg != "" {
+		t.Fatalf("expected ok window, got %s", msg)
 	}
 }
