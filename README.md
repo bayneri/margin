@@ -131,6 +131,12 @@ Outputs:
 ./margin export terraform -f examples/slo.yaml --out out/terraform
 ```
 
+Pass `--module` to emit a module scaffold (`main.tf.json`, `variables.tf.json`, `outputs.tf.json`) with `var.project` parameterized:
+
+```bash
+./margin export terraform --module -f examples/slo.yaml --out out/terraform-module
+```
+
 `margin export monitoring-json` writes raw Monitoring API JSON payloads.
 
 ```bash
