@@ -27,6 +27,7 @@ func runExport(args []string) error {
 func runExportTerraform(args []string) error {
 	fs, opts := baseFlags("export terraform", args)
 	outDir := fs.String("out", "out/terraform", "output directory")
+	module := fs.Bool("module", false, "emit Terraform module (main/variables/outputs)")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
@@ -37,6 +38,17 @@ func runExportTerraform(args []string) error {
 	template, err := spec.TemplateForService(specDoc.Metadata.Service)
 	if err != nil {
 		return err
+	}
+	if *module && *outDir == "out/terraform" {
+		*outDir = "out/terraform-module"
+	}
+	if *module {
+		path, err := terraform.WriteModule(plan, template, *outDir)
+		if err != nil {
+			return err
+		}
+		fmt.Fprintf(os.Stdout, "Wrote Terraform module to %s\n", path)
+		return nil
 	}
 	path, err := terraform.Write(plan, template, *outDir)
 	if err != nil {

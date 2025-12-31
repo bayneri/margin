@@ -14,6 +14,9 @@ import (
 )
 
 const outputFile = "main.tf.json"
+const moduleMainFile = "main.tf.json"
+const moduleVariablesFile = "variables.tf.json"
+const moduleOutputsFile = "outputs.tf.json"
 
 func Write(plan planner.Plan, template spec.ServiceTemplate, outDir string) (string, error) {
 	if outDir == "" {
@@ -48,7 +51,7 @@ func Write(plan planner.Plan, template spec.ServiceTemplate, outDir string) (str
 				"project": plan.Project,
 			},
 		},
-		"resource": buildResources(plan, template, dashboardJSON),
+		"resource": buildResourcesForProject(plan, template, dashboardJSON, plan.Project),
 	}
 
 	data, err := json.MarshalIndent(cfg, "", "  ")
@@ -63,13 +66,126 @@ func Write(plan planner.Plan, template spec.ServiceTemplate, outDir string) (str
 	return path, nil
 }
 
+// WriteModule emits a Terraform module skeleton (main + variables + outputs),
+// parameterizing the project as a variable.
+func WriteModule(plan planner.Plan, template spec.ServiceTemplate, outDir string) (string, error) {
+	if outDir == "" {
+		outDir = filepath.Join("out", "terraform-module")
+	}
+	if err := os.MkdirAll(outDir, 0755); err != nil {
+		return "", err
+	}
+	dashboardJSON, err := monitoring.BuildDashboardJSON(monitoring.ApplyDashboardRequest{
+		Project:   plan.Project,
+		ServiceID: plan.ServiceID,
+		Dashboard: plan.Dashboard,
+		SLOs:      plan.SLOs,
+		Template:  template,
+		Labels:    plan.Dashboard.Labels,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	projectExpr := "${var.project}"
+	resources := buildResourcesForProject(plan, template, dashboardJSON, projectExpr)
+
+	mainCfg := map[string]interface{}{
+		"terraform": map[string]interface{}{
+			"required_providers": map[string]interface{}{
+				"google": map[string]interface{}{
+					"source":  "hashicorp/google",
+					"version": ">= 5.0",
+				},
+			},
+		},
+		"resource": resources,
+	}
+	mainData, err := json.MarshalIndent(mainCfg, "", "  ")
+	if err != nil {
+		return "", err
+	}
+	mainData = append(mainData, '\n')
+	if err := os.WriteFile(filepath.Join(outDir, moduleMainFile), mainData, 0644); err != nil {
+		return "", err
+	}
+
+	vars := map[string]interface{}{
+		"variable": map[string]interface{}{
+			"project": map[string]interface{}{
+				"type": "string",
+			},
+		},
+	}
+	varData, err := json.MarshalIndent(vars, "", "  ")
+	if err != nil {
+		return "", err
+	}
+	varData = append(varData, '\n')
+	if err := os.WriteFile(filepath.Join(outDir, moduleVariablesFile), varData, 0644); err != nil {
+		return "", err
+	}
+
+	serviceName := tfName("service", plan.ServiceID)
+	var sloNames, alertNames []string
+	for _, slo := range plan.SLOs {
+		sloNames = append(sloNames, tfName("slo", slo.ResourceID))
+	}
+	for _, alert := range plan.Alerts {
+		alertNames = append(alertNames, tfName("alert", alert.ID))
+	}
+	dashName := tfName("dashboard", plan.Dashboard.ID)
+
+	outputs := map[string]interface{}{
+		"output": map[string]interface{}{
+			"service_name": map[string]interface{}{
+				"value": fmt.Sprintf("${google_monitoring_service.%s.name}", serviceName),
+			},
+			"slo_names": map[string]interface{}{
+				"value": buildOutputRefs("google_monitoring_slo", sloNames, "name"),
+			},
+			"alert_policy_names": map[string]interface{}{
+				"value": buildOutputRefs("google_monitoring_alert_policy", alertNames, "name"),
+			},
+			"dashboard_name": map[string]interface{}{
+				"value": fmt.Sprintf("${google_monitoring_dashboard.%s.name}", dashName),
+			},
+		},
+	}
+	outData, err := json.MarshalIndent(outputs, "", "  ")
+	if err != nil {
+		return "", err
+	}
+	outData = append(outData, '\n')
+	if err := os.WriteFile(filepath.Join(outDir, moduleOutputsFile), outData, 0644); err != nil {
+		return "", err
+	}
+
+	return filepath.Join(outDir, moduleMainFile), nil
+}
+
+func buildOutputRefs(resourceType string, names []string, attr string) interface{} {
+	if len(names) == 0 {
+		return []string{}
+	}
+	var refs []string
+	for _, name := range names {
+		refs = append(refs, fmt.Sprintf("${%s.%s.%s}", resourceType, name, attr))
+	}
+	return refs
+}
+
 func buildResources(plan planner.Plan, template spec.ServiceTemplate, dashboardJSON string) map[string]map[string]interface{} {
+	return buildResourcesForProject(plan, template, dashboardJSON, plan.Project)
+}
+
+func buildResourcesForProject(plan planner.Plan, template spec.ServiceTemplate, dashboardJSON string, projectValue string) map[string]map[string]interface{} {
 	resources := map[string]map[string]interface{}{}
 
 	serviceName := tfName("service", plan.ServiceID)
 	resources["google_monitoring_service"] = map[string]interface{}{
 		serviceName: map[string]interface{}{
-			"project":      plan.Project,
+			"project":      projectValue,
 			"service_id":   plan.ServiceID,
 			"display_name": plan.ServiceName,
 			"user_labels":  plan.Dashboard.Labels,
@@ -102,9 +218,13 @@ func buildResources(plan planner.Plan, template spec.ServiceTemplate, dashboardJ
 }
 
 func buildSLOResource(plan planner.Plan, slo planner.SLOPlan, template spec.ServiceTemplate) map[string]interface{} {
+	return buildSLOResourceWithProject(plan, slo, template, plan.Project)
+}
+
+func buildSLOResourceWithProject(plan planner.Plan, slo planner.SLOPlan, template spec.ServiceTemplate, projectValue string) map[string]interface{} {
 	resource := map[string]interface{}{
-		"project":      plan.Project,
-		"service":      fmt.Sprintf("projects/%s/services/%s", plan.Project, plan.ServiceID),
+		"project":      projectValue,
+		"service":      fmt.Sprintf("projects/%s/services/%s", projectValue, plan.ServiceID),
 		"slo_id":       slo.ResourceID,
 		"display_name": slo.DisplayName,
 		"goal":         slo.Objective / 100.0,
@@ -150,6 +270,10 @@ func buildSLOResource(plan planner.Plan, slo planner.SLOPlan, template spec.Serv
 }
 
 func buildAlertResource(plan planner.Plan, alert planner.AlertPlan) map[string]interface{} {
+	return buildAlertResourceWithProject(plan, alert, plan.Project)
+}
+
+func buildAlertResourceWithProject(plan planner.Plan, alert planner.AlertPlan, projectValue string) map[string]interface{} {
 	conditions := []map[string]interface{}{}
 	for _, window := range alert.Windows {
 		duration, err := parseWindow(window)
@@ -169,7 +293,7 @@ func buildAlertResource(plan planner.Plan, alert planner.AlertPlan) map[string]i
 	}
 
 	return map[string]interface{}{
-		"project":      plan.Project,
+		"project":      projectValue,
 		"display_name": alert.DisplayName,
 		"combiner":     "AND",
 		"documentation": map[string]interface{}{
