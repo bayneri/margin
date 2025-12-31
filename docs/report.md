@@ -21,3 +21,8 @@ Example:
 ```bash
 ./margin report --inputs out/a/summary.json,out/b/summary.json --out out/report
 ```
+
+Aggregation rules:
+- Overall status is the worst across all services/SLOs (breach > partial/error > ok).
+- Partial inputs produce warnings and exit code 2.
+- SLO rows are merged per service; errors from inputs are preserved.

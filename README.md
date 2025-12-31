@@ -146,6 +146,7 @@ Outputs:
 ```
 
 If `--service-type` is omitted, `margin` will try to infer it from the SLO metrics.
+See `docs/import.md` for supported conversions.
 
 ## Aggregate reports
 
