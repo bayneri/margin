@@ -90,6 +90,8 @@ go build ./cmd/margin
 - Cloud Tasks (`cloud-tasks`)
 - BigQuery (`bigquery`)
 - Spanner (`spanner`)
+- Cloud CDN (`cloud-cdn`)
+- GCE uptime checks (`gce-uptime`)
 
 ## Screenshots
 

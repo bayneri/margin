@@ -168,6 +168,8 @@ func knownTemplates() []spec.ServiceTemplate {
 		"cloud-tasks",
 		"bigquery",
 		"spanner",
+		"cloud-cdn",
+		"gce-uptime",
 	} {
 		if tpl, err := spec.TemplateForService(name); err == nil {
 			templates = append(templates, tpl)

@@ -252,6 +252,38 @@ var serviceTemplates = map[string]ServiceTemplate{
 			"Client-side timeouts can appear as service errors unless filtered.",
 		},
 	},
+	"cloud-cdn": {
+		Name:         "cloud-cdn",
+		ResourceType: "http_load_balancer",
+		Metrics: map[string]MetricTemplate{
+			"loadbalancing.googleapis.com/https/request_count": {
+				Name:        "loadbalancing.googleapis.com/https/request_count",
+				Description: "HTTP(S) request count served via CDN-enabled load balancer",
+			},
+			"loadbalancing.googleapis.com/https/total_latencies": {
+				Name:        "loadbalancing.googleapis.com/https/total_latencies",
+				Description: "HTTP(S) latency distribution for CDN-enabled load balancer",
+			},
+		},
+		Pitfalls: []string{
+			"Cache hits can mask backend errors; consider filtering on cache_result if needed.",
+			"Regional vs global LB settings may change resource.label values.",
+		},
+	},
+	"gce-uptime": {
+		Name:         "gce-uptime",
+		ResourceType: "uptime_url",
+		Metrics: map[string]MetricTemplate{
+			"monitoring.googleapis.com/uptime_check/check_passed": {
+				Name:        "monitoring.googleapis.com/uptime_check/check_passed",
+				Description: "Uptime check pass/fail for HTTP(S) endpoints",
+			},
+		},
+		Pitfalls: []string{
+			"Uptime checks are synthetic; ensure they match user paths and auth.",
+			"Probe location failures can be localized; consider multi-location checks.",
+		},
+	},
 }
 
 func TemplateForService(service string) (ServiceTemplate, error) {
