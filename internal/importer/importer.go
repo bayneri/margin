@@ -299,7 +299,14 @@ func sloToSpec(slo *monitoringpb.ServiceLevelObjective, serviceType string) (spe
 
 	if gtr := rb.GetGoodTotalRatio(); gtr != nil {
 		goodMetric, _, goodExtra := parseFilter(gtr.GetGoodServiceFilter())
+		badMetric, _, badExtra := parseFilter(gtr.GetBadServiceFilter())
 		totalMetric, _, totalExtra := parseFilter(gtr.GetTotalServiceFilter())
+
+		if goodMetric == "" && badMetric != "" && totalMetric != "" {
+			goodMetric = totalMetric
+			goodExtra = combineFilters(totalExtra, negateFilter(badExtra))
+		}
+
 		if goodMetric == "" || totalMetric == "" {
 			return spec.SLO{}, fmt.Sprintf("skipping %s: unable to parse request-based filters", id), false
 		}
