@@ -214,7 +214,14 @@ func sloToSpec(slo *monitoringpb.ServiceLevelObjective, serviceType string) (spe
 			}
 			if gtrRatio := perf.GetGoodTotalRatio(); gtrRatio != nil {
 				goodMetric, _, goodExtra := parseFilter(gtrRatio.GetGoodServiceFilter())
+				badMetric, _, badExtra := parseFilter(gtrRatio.GetBadServiceFilter())
 				totalMetric, _, totalExtra := parseFilter(gtrRatio.GetTotalServiceFilter())
+
+				if goodMetric == "" && badMetric != "" && totalMetric != "" {
+					goodMetric = totalMetric
+					goodExtra = combineFilters(totalExtra, negateFilter(badExtra))
+				}
+
 				if goodMetric == "" || totalMetric == "" {
 					return spec.SLO{}, fmt.Sprintf("skipping %s: unable to parse windows-based filters", id), false
 				}
@@ -230,6 +237,19 @@ func sloToSpec(slo *monitoringpb.ServiceLevelObjective, serviceType string) (spe
 					},
 				}
 				return out, "converted windows-based SLI to request-based good/total", true
+			}
+			if cut := perf.GetDistributionCut(); cut != nil {
+				metric, _, extra := parseFilter(cut.GetDistributionFilter())
+				if metric == "" {
+					return spec.SLO{}, fmt.Sprintf("skipping %s: unable to parse windows-based latency filter", id), false
+				}
+				out.SLI = spec.SLI{
+					Type:      "latency",
+					Metric:    metric,
+					Filter:    extra,
+					Threshold: formatSeconds(cut.GetRange().GetMax()),
+				}
+				return out, "converted windows-based distribution cut to latency threshold", true
 			}
 		}
 		return spec.SLO{}, fmt.Sprintf("skipping %s: windows-based SLI not yet supported (criteria: %T)", id, wb.GetWindowCriterion()), false
@@ -512,4 +532,22 @@ func labelsEqual(a, b map[string]string) bool {
 		}
 	}
 	return true
+}
+
+func negateFilter(filter string) string {
+	filter = strings.TrimSpace(filter)
+	if filter == "" {
+		return ""
+	}
+	return fmt.Sprintf("NOT (%s)", filter)
+}
+
+func combineFilters(parts ...string) string {
+	var nonEmpty []string
+	for _, part := range parts {
+		if strings.TrimSpace(part) != "" {
+			nonEmpty = append(nonEmpty, strings.TrimSpace(part))
+		}
+	}
+	return strings.Join(nonEmpty, " AND ")
 }

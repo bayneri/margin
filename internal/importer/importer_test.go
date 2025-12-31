@@ -100,6 +100,49 @@ func TestWindowsBasedWarning(t *testing.T) {
 	}
 }
 
+func TestWindowsBasedDistributionCut(t *testing.T) {
+	slo := &monitoringpb.ServiceLevelObjective{
+		Name:        "projects/demo/services/checkout-api/serviceLevelObjectives/latency",
+		DisplayName: "latency",
+		Goal:        0.99,
+		ServiceLevelIndicator: &monitoringpb.ServiceLevelIndicator{
+			Type: &monitoringpb.ServiceLevelIndicator_WindowsBased{
+				WindowsBased: &monitoringpb.WindowsBasedSli{
+					WindowCriterion: &monitoringpb.WindowsBasedSli_GoodTotalRatioThreshold{
+						GoodTotalRatioThreshold: &monitoringpb.WindowsBasedSli_PerformanceThreshold{
+							Type: &monitoringpb.WindowsBasedSli_PerformanceThreshold_Performance{
+								Performance: &monitoringpb.RequestBasedSli{
+									Method: &monitoringpb.RequestBasedSli_DistributionCut{
+										DistributionCut: &monitoringpb.DistributionCut{
+											DistributionFilter: `metric.type="run.googleapis.com/request_latencies" AND resource.type="cloud_run_revision"`,
+											Range:              &monitoringpb.Range{Min: 0, Max: 0.5},
+										},
+									},
+								},
+							},
+							Threshold: 0.95,
+						},
+					},
+				},
+			},
+		},
+		Period: &monitoringpb.ServiceLevelObjective_RollingPeriod{
+			RollingPeriod: durationpb.New(30 * 24 * time.Hour),
+		},
+	}
+
+	out, warn, ok := sloToSpec(slo, "cloud-run")
+	if !ok {
+		t.Fatalf("expected conversion for windows-based distribution cut")
+	}
+	if out.SLI.Type != "latency" {
+		t.Fatalf("expected latency SLI, got %s", out.SLI.Type)
+	}
+	if warn == "" || !strings.Contains(warn, "distribution cut") {
+		t.Fatalf("expected distribution cut warning, got %q", warn)
+	}
+}
+
 func TestBasicSliSkip(t *testing.T) {
 	slo := &monitoringpb.ServiceLevelObjective{
 		Name:        "projects/demo/services/checkout-api/serviceLevelObjectives/basic",
