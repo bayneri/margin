@@ -73,7 +73,7 @@ func Import(ctx context.Context, client *monitoring.GCPClient, opts Options) (Re
 	})
 
 	for _, slo := range slos {
-		out, warn, ok := sloToSpec(slo)
+		out, warn, ok := sloToSpec(slo, serviceType)
 		if warn != "" {
 			warnings = append(warnings, warn)
 		}
@@ -176,7 +176,7 @@ func knownTemplates() []spec.ServiceTemplate {
 	return templates
 }
 
-func sloToSpec(slo *monitoringpb.ServiceLevelObjective) (spec.SLO, string, bool) {
+func sloToSpec(slo *monitoringpb.ServiceLevelObjective, serviceType string) (spec.SLO, string, bool) {
 	id := lastSegment(slo.GetName())
 	if id == "" {
 		id = sanitizeName(slo.GetDisplayName())
@@ -201,11 +201,16 @@ func sloToSpec(slo *monitoringpb.ServiceLevelObjective) (spec.SLO, string, bool)
 	if sli == nil {
 		return spec.SLO{}, fmt.Sprintf("skipping %s: missing SLI", id), false
 	}
+	template, _ := spec.TemplateForService(serviceType)
+
 	if wb := sli.GetWindowsBased(); wb != nil {
 		if gtr := wb.GetGoodTotalRatioThreshold(); gtr != nil {
 			perf := gtr.GetPerformance()
 			if perf == nil {
 				return spec.SLO{}, fmt.Sprintf("skipping %s: windows-based SLI missing performance block", id), false
+			}
+			if gtr.GetBasicSliPerformance() != nil {
+				return spec.SLO{}, fmt.Sprintf("skipping %s: windows-based basic SLI not supported (no explicit metrics)", id), false
 			}
 			if gtrRatio := perf.GetGoodTotalRatio(); gtrRatio != nil {
 				goodMetric, _, goodExtra := parseFilter(gtrRatio.GetGoodServiceFilter())
@@ -226,11 +231,46 @@ func sloToSpec(slo *monitoringpb.ServiceLevelObjective) (spec.SLO, string, bool)
 				}
 				return out, "converted windows-based SLI to request-based good/total", true
 			}
-			if gtr.GetBasicSliPerformance() != nil {
-				return spec.SLO{}, fmt.Sprintf("skipping %s: windows-based basic SLI unsupported", id), false
-			}
 		}
 		return spec.SLO{}, fmt.Sprintf("skipping %s: windows-based SLI not yet supported (criteria: %T)", id, wb.GetWindowCriterion()), false
+	}
+	if basic := sli.GetBasicSli(); basic != nil {
+		if lat := basic.GetLatency(); lat != nil {
+			metric := defaultLatencyMetric(template)
+			if metric == "" {
+				return spec.SLO{}, fmt.Sprintf("skipping %s: cannot map basic latency (no template latency metric)", id), false
+			}
+			threshold := lat.GetThreshold()
+			if threshold == nil {
+				return spec.SLO{}, fmt.Sprintf("skipping %s: basic latency missing threshold", id), false
+			}
+			out.SLI = spec.SLI{
+				Type:      "latency",
+				Metric:    metric,
+				Threshold: formatSeconds(threshold.AsDuration().Seconds()),
+				Filter:    fmt.Sprintf(`resource.type="%s"`, template.ResourceType),
+			}
+			return out, "converted basic latency SLI to latency threshold", true
+		}
+		if basic.GetAvailability() != nil {
+			requestMetric := defaultRequestMetric(template)
+			if requestMetric == "" {
+				return spec.SLO{}, fmt.Sprintf("skipping %s: cannot map basic availability (no template request metric)", id), false
+			}
+			out.SLI = spec.SLI{
+				Type: "request-based",
+				Good: &spec.MetricDef{
+					Metric: requestMetric,
+					Filter: fmt.Sprintf(`resource.type="%s"`, template.ResourceType),
+				},
+				Total: &spec.MetricDef{
+					Metric: requestMetric,
+					Filter: fmt.Sprintf(`resource.type="%s"`, template.ResourceType),
+				},
+			}
+			return out, "converted basic availability SLI to request-based good/total", true
+		}
+		return spec.SLO{}, fmt.Sprintf("skipping %s: basic SLI missing latency/availability", id), false
 	}
 	rb := sli.GetRequestBased()
 	if rb == nil {
@@ -406,6 +446,27 @@ func sanitizeName(name string) string {
 		}
 	}
 	return strings.Trim(string(out), "-")
+}
+
+func defaultRequestMetric(template spec.ServiceTemplate) string {
+	for name := range template.Metrics {
+		if strings.Contains(name, "request_count") || strings.Contains(name, "request") {
+			return name
+		}
+	}
+	for name := range template.Metrics {
+		return name
+	}
+	return ""
+}
+
+func defaultLatencyMetric(template spec.ServiceTemplate) string {
+	for name := range template.Metrics {
+		if strings.Contains(name, "latency") {
+			return name
+		}
+	}
+	return ""
 }
 
 func commonLabels(slos []*monitoringpb.ServiceLevelObjective) map[string]string {

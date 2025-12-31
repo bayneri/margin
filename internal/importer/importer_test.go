@@ -91,11 +91,35 @@ func TestWindowsBasedWarning(t *testing.T) {
 		},
 	}
 
-	_, warn, ok := sloToSpec(slo)
+	_, warn, ok := sloToSpec(slo, "cloud-run")
 	if !ok {
 		t.Fatalf("expected conversion for windows-based SLI")
 	}
 	if warn == "" || !strings.Contains(warn, "converted windows-based") {
 		t.Fatalf("expected conversion warning, got %q", warn)
+	}
+}
+
+func TestBasicSliSkip(t *testing.T) {
+	slo := &monitoringpb.ServiceLevelObjective{
+		Name:        "projects/demo/services/checkout-api/serviceLevelObjectives/basic",
+		DisplayName: "basic",
+		Goal:        0.99,
+		ServiceLevelIndicator: &monitoringpb.ServiceLevelIndicator{
+			Type: &monitoringpb.ServiceLevelIndicator_BasicSli{
+				BasicSli: &monitoringpb.BasicSli{},
+			},
+		},
+		Period: &monitoringpb.ServiceLevelObjective_RollingPeriod{
+			RollingPeriod: durationpb.New(30 * 24 * time.Hour),
+		},
+	}
+
+	_, warn, ok := sloToSpec(slo, "cloud-run")
+	if ok {
+		t.Fatalf("expected skip for basic SLI")
+	}
+	if warn == "" || !strings.Contains(warn, "basic SLI") {
+		t.Fatalf("expected basic SLI warning, got %q", warn)
 	}
 }
