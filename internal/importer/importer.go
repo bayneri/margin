@@ -201,9 +201,40 @@ func sloToSpec(slo *monitoringpb.ServiceLevelObjective) (spec.SLO, string, bool)
 	if sli == nil {
 		return spec.SLO{}, fmt.Sprintf("skipping %s: missing SLI", id), false
 	}
+	if wb := sli.GetWindowsBased(); wb != nil {
+		if gtr := wb.GetGoodTotalRatioThreshold(); gtr != nil {
+			perf := gtr.GetPerformance()
+			if perf == nil {
+				return spec.SLO{}, fmt.Sprintf("skipping %s: windows-based SLI missing performance block", id), false
+			}
+			if gtrRatio := perf.GetGoodTotalRatio(); gtrRatio != nil {
+				goodMetric, _, goodExtra := parseFilter(gtrRatio.GetGoodServiceFilter())
+				totalMetric, _, totalExtra := parseFilter(gtrRatio.GetTotalServiceFilter())
+				if goodMetric == "" || totalMetric == "" {
+					return spec.SLO{}, fmt.Sprintf("skipping %s: unable to parse windows-based filters", id), false
+				}
+				out.SLI = spec.SLI{
+					Type: "request-based",
+					Good: &spec.MetricDef{
+						Metric: goodMetric,
+						Filter: goodExtra,
+					},
+					Total: &spec.MetricDef{
+						Metric: totalMetric,
+						Filter: totalExtra,
+					},
+				}
+				return out, "converted windows-based SLI to request-based good/total", true
+			}
+			if gtr.GetBasicSliPerformance() != nil {
+				return spec.SLO{}, fmt.Sprintf("skipping %s: windows-based basic SLI unsupported", id), false
+			}
+		}
+		return spec.SLO{}, fmt.Sprintf("skipping %s: windows-based SLI not yet supported (criteria: %T)", id, wb.GetWindowCriterion()), false
+	}
 	rb := sli.GetRequestBased()
 	if rb == nil {
-		return spec.SLO{}, fmt.Sprintf("skipping %s: unsupported SLI type", id), false
+		return spec.SLO{}, fmt.Sprintf("skipping %s: unsupported SLI type %T", id, sli.GetType()), false
 	}
 
 	if gtr := rb.GetGoodTotalRatio(); gtr != nil {

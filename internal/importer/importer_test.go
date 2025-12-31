@@ -1,6 +1,7 @@
 package importer
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -56,5 +57,45 @@ func TestInferServiceType(t *testing.T) {
 
 	if got := inferServiceType([]*monitoringpb.ServiceLevelObjective{slo}); got != "cloud-run" {
 		t.Fatalf("expected cloud-run, got %q", got)
+	}
+}
+
+func TestWindowsBasedWarning(t *testing.T) {
+	slo := &monitoringpb.ServiceLevelObjective{
+		Name:        "projects/demo/services/checkout-api/serviceLevelObjectives/latency",
+		DisplayName: "latency",
+		Goal:        0.99,
+		ServiceLevelIndicator: &monitoringpb.ServiceLevelIndicator{
+			Type: &monitoringpb.ServiceLevelIndicator_WindowsBased{
+				WindowsBased: &monitoringpb.WindowsBasedSli{
+					WindowCriterion: &monitoringpb.WindowsBasedSli_GoodTotalRatioThreshold{
+						GoodTotalRatioThreshold: &monitoringpb.WindowsBasedSli_PerformanceThreshold{
+							Type: &monitoringpb.WindowsBasedSli_PerformanceThreshold_Performance{
+								Performance: &monitoringpb.RequestBasedSli{
+									Method: &monitoringpb.RequestBasedSli_GoodTotalRatio{
+										GoodTotalRatio: &monitoringpb.TimeSeriesRatio{
+											GoodServiceFilter:  `metric.type="run.googleapis.com/request_count"`,
+											TotalServiceFilter: `metric.type="run.googleapis.com/request_count"`,
+										},
+									},
+								},
+							},
+							Threshold: 0.99,
+						},
+					},
+				},
+			},
+		},
+		Period: &monitoringpb.ServiceLevelObjective_RollingPeriod{
+			RollingPeriod: durationpb.New(30 * 24 * time.Hour),
+		},
+	}
+
+	_, warn, ok := sloToSpec(slo)
+	if !ok {
+		t.Fatalf("expected conversion for windows-based SLI")
+	}
+	if warn == "" || !strings.Contains(warn, "converted windows-based") {
+		t.Fatalf("expected conversion warning, got %q", warn)
 	}
 }
