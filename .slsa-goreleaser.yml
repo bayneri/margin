@@ -1,0 +1,16 @@
+version: 1
+
+module_path: github.com/bayneri/margin
+go_version: "1.24.0"
+
+binary: margin
+dir: ./cmd/margin
+
+goos:
+  - linux
+  - darwin
+
+goarch:
+  - amd64
+  - arm64
+
