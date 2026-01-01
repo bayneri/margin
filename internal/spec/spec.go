@@ -96,7 +96,7 @@ func (s Spec) Validate() error {
 	if templateErr != nil {
 		errs = append(errs, templateErr.Error())
 	}
-	if alertErr := validateAlerting(s.Alerting); alertErr != "" {
+	if alertErr := validateAlerting(s.Alerting, template); alertErr != "" {
 		errs = append(errs, alertErr)
 	}
 
@@ -158,9 +158,12 @@ func validatePeriod(period, window string) string {
 	}
 }
 
-func validateAlerting(alerting Alerting) string {
+func validateAlerting(alerting Alerting, template ServiceTemplate) string {
 	if strings.TrimSpace(alerting.BurnRateResourceType) == "" {
 		return ""
+	}
+	if template.ResourceType != "" && alerting.BurnRateResourceType != template.ResourceType {
+		return fmt.Sprintf("alerting.burnRateResourceType must match template resource.type %q", template.ResourceType)
 	}
 	for _, r := range alerting.BurnRateResourceType {
 		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '_' {
